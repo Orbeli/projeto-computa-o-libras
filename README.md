@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # FastAPI + SQLModel + Alembic
 
 Sample FastAPI project that uses async SQLAlchemy, SQLModel, Postgres, Alembic, and Docker.
@@ -22,3 +23,7 @@ $ curl -d '{"name":"Midnight Fit", "artist":"Mogwai", "year":"2021"}' -H "Conten
 ```
 
 Get all songs: [http://localhost:8004/songs](http://localhost:8004/songs)
+=======
+# projeto-computa-o-libras
+Projeto de Computação I
+>>>>>>> 68f796cbe6c4b69801d0d53681d968c0d8f55874
