@@ -8,9 +8,9 @@ from app.services.helpers.http import HttpResponse
 
 
 class CreateAccountParams(BaseModel):
-    person_name: str
-    person_mail: str
-    person_age: Optional[str]
+    name: str
+    email: str
+    password: str
 
 
 class CreateAccountResponse(CreateAccountParams):

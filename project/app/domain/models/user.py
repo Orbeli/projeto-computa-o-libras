@@ -4,7 +4,7 @@ from pydantic import BaseModel
 class User(BaseModel):
     name: str
     email: str
-    age: Optional[str] = None
+    password: str = None
 
 
     class Config:

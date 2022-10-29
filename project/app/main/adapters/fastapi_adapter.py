@@ -7,14 +7,14 @@ from app.services.helpers.http import HttpRequest, HttpResponse, HttpStatus
 
 def fast_api_adapter(request: Any, usecase: Usecase) -> HttpResponse:
 
-    try:
-        http_request = HttpRequest(
-            header=request['headers'], body=request['body'], query=request['query'])
-        response = usecase.execute(http_request.body)
+    # try:
+    http_request = HttpRequest(
+        header=request['headers'], body=request['body'], query=request['query'])
+    response = usecase.execute(http_request.body)
 
-    except Exception:
+    # except Exception:
         # logger.error(
         #     f'Erro desconhecido na execução do caso de uso: {format_exc()}')
-        return HttpStatus.internal_server_error_500()
+        # return HttpStatus.internal_server_error_500()
 
     return response
