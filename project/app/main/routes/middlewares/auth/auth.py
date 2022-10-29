@@ -1,57 +1,79 @@
-from base64 import b64decode
-from http import HTTPStatus
-from secrets import compare_digest
-from typing import Dict
+import secrets
 
-from fastapi import Request
-from starlette.responses import JSONResponse
+from jose import jwt
+from datetime import datetime
+from pydantic import BaseModel, ValidationError
 
-from app.main.main import app
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBasic, HTTPBasicCredentials, OAuth2PasswordBearer
+from fastapi_sqlalchemy import db
+
+from app.domain.models.models import User
 from app.services.helpers.envs import get_service_password, get_service_username
+from app.main.config.authorization import (
+    ALGORITHM,
+    JWT_SECRET_KEY
+)
 
 
-def _is_authenticate_route(path: str) -> bool:
-    not_authenticated_routes = ['/openapi.json', '/docs']
-    return path not in not_authenticated_routes
+class TokenPayload(BaseModel):
+    sub: str = None
+    exp: int = None
 
 
-def _is_valid_credentials(headers: Dict) -> bool:
+security = HTTPBasic()
+
+reuseable_oauth = OAuth2PasswordBearer(
+    tokenUrl="/login",
+    scheme_name="JWT"
+)
+
+
+def basic_authorization(credentials: HTTPBasicCredentials = Depends(security)) -> bool:
+
+    current_username_bytes = credentials.username.encode("utf8")
+    correct_username_bytes = get_service_username().encode("utf8")
+    is_correct_username = secrets.compare_digest(
+        current_username_bytes, correct_username_bytes
+    )
+    current_password_bytes = credentials.password.encode("utf8")
+    correct_password_bytes = get_service_password().encode("utf8")
+    is_correct_password = secrets.compare_digest(
+        current_password_bytes, correct_password_bytes
+    )
+    if not (is_correct_username and is_correct_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password"
+        )
+
+    return True
+
+
+async def jwt_authorization(token: str = Depends(reuseable_oauth)) -> User:
     try:
-        authorization_type, authorization_credentials = str(
-            headers.get('Authorization')).split(' ')
+        payload = jwt.decode(
+            token, JWT_SECRET_KEY, algorithms=[ALGORITHM]
+        )
+        token_data = TokenPayload(**payload)
 
-        if authorization_type.lower() != 'basic':
-            return False
+        if datetime.fromtimestamp(token_data.exp) < datetime.now():
+            raise HTTPException(
+                status_code = status.HTTP_401_UNAUTHORIZED,
+                detail="Token expired",
+            )
+    except(jwt.JWTError, ValidationError):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Could not validate credentials",
+        )
 
-        client_id, client_secret = b64decode(
-            authorization_credentials).decode().split(':')
+    user = db.session.query(User).filter(User.email == token_data.sub).first()
 
-        valid_client_id = compare_digest(
-            get_service_username(), client_id)
-        valid_client_secret = compare_digest(
-            get_service_password(), client_secret)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Could not find user",
+        )
 
-        return valid_client_id and valid_client_secret
-    except Exception:
-        return False
-
-
-def _mount_unauthorized_payload() -> JSONResponse:
-    return JSONResponse(content={
-        'message': 'Unauthorized'
-    }, status_code=HTTPStatus.UNAUTHORIZED)
-
-
-@app.middleware('http')
-async def auth(request: Request, call_next):
-    headers = request.headers
-
-    if not _is_authenticate_route(request.get('path')):
-        response = await call_next(request)
-        return response
-
-    if not _is_valid_credentials(headers):
-        return _mount_unauthorized_payload()
-
-    response = await call_next(request)
-    return response
+    return user

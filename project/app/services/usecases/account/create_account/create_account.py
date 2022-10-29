@@ -18,10 +18,10 @@ class CreateAccount(CreateAccountContract):
     def execute(self, params: CreateAccountParams) -> HttpResponse:
         user = self.user_repository.get_user_by_email(params.email)
         if user is not None:
-                return HttpStatus.bad_request_400({
+                return HttpStatus.bad_request_400(
                     "User with this email already exist"
-                })
-        
+                )
+
         user_id = self.user_repository.create_user(
             SaveUserParams(
                 name=params.name,

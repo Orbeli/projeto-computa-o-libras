@@ -1,1 +1,1 @@
-from .auth import auth
+from .auth import basic_authorization, jwt_authorization

@@ -1,5 +1,4 @@
 from abc import abstractmethod
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -7,17 +6,17 @@ from app.domain.usecases.usecase import Usecase
 from app.services.helpers.http import HttpResponse
 
 
-class CreateAccountParams(BaseModel):
-    name: str
+class LoginParams(BaseModel):
     email: str
     password: str
 
 
-class CreateAccountResponse(CreateAccountParams):
-    pass
+class LoginResponse(BaseModel):
+    access_token: str
+    refresh_token: str
 
 
-class CreateAccount(Usecase):
+class Login(Usecase):
     @abstractmethod
-    def execute(self, params: CreateAccountParams) -> HttpResponse:
+    def execute(self, params: LoginParams) -> HttpResponse:
         raise NotImplementedError()
