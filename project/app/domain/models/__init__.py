@@ -1,2 +1,2 @@
 from .user import User
-from .models import User, Module
+from .models import User, Module, Lesson

@@ -1,0 +1,23 @@
+from app.domain.usecases import GetLesson as GetLessonContract
+from app.domain.usecases import GetLessonParams
+from app.services.contracts import LessonRepositoryContract
+from app.services.helpers.http import HttpResponse, HttpStatus
+
+
+class GetLesson(GetLessonContract):
+    def __init__(
+        self,
+        lesson_repository: LessonRepositoryContract
+    ) -> None:
+        self.lesson_repository = lesson_repository
+
+    def execute(self, params: GetLessonParams) -> HttpResponse:
+        lesson = self.lesson_repository.get_lesson_by_id(params.id)
+        if not lesson:
+            return HttpStatus.not_found_404(
+                f"Lesson [{params.id}] does not exist"
+            )
+
+        return HttpStatus.ok_200({
+            'lesson': lesson
+        })

@@ -17,6 +17,14 @@ class ModuleRepository(ModuleRepositoryContract):
             except Exception as error:
                 print("Erro ao recuperar modulo")
 
+    def delete_module_by_id(self, id: int) -> None:
+        with self._db():
+            try:
+                self._db.session.query(Module).filter(Module.id == id).delete()
+                self._db.session.commit()
+            except Exception as error:
+                print("Erro ao recuperar modulo")
+
     def create_module(self, params: SaveModuleParams) -> str:
         with self._db():
             db_module = Module(

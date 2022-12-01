@@ -8,8 +8,13 @@ from app.main.factories import (
     create_account_factory,
     login_factory,
     create_module_factory,
-    get_module_factory
+    get_module_factory,
+    create_lesson_factory,
+    delete_lesson_factory,
+    get_lesson_factory,
+    delete_module_factory
 )
+
 from app.main.routes.helpers import (HandledError, InternalServerError,
                                      Unauthorized)
 from app.main.routes.middlewares.auth import basic_authorization, jwt_authorization
@@ -22,21 +27,36 @@ from app.domain.usecases import (
     CreateModuleParams,
     CreateModuleResponse,
     GetModuleParams,
-    GetModuleResponse
+    GetModuleResponse,
+    CreateLessonParams,
+    DeleteLessonParams,
+    GetLessonParams,
+    GetLessonResponse,
+    DeleteModuleParams,
+    DeleteModuleResponse
 )
 
 
-@app.get("/teste_no_auth")
+@app.get(
+    "/teste_no_auth",
+    tags=['Authorization']
+)
 async def pong():
     return {"authorization": "Nenhuma :/"}
 
 
-@app.get("/teste_basic")
+@app.get(
+    "/teste_basic",
+    tags=['Authorization']
+)
 async def get_me(authorization: bool = Depends(basic_authorization)):
     return {"authorization": authorization}
 
 
-@app.get("/teste_jwt")
+@app.get(
+    "/teste_jwt",
+    tags=['Authorization']
+)
 async def get_me(authorization: User = Depends(jwt_authorization)):
     return {"authorization": authorization}
 
@@ -79,7 +99,8 @@ def create_account(body: CreateAccountParams, response: Response, authorization:
             'model': InternalServerError, 'description': 'Internal Server Error'
         },
     },
-    summary="Create access and refresh tokens for user"
+    summary="Create access and refresh tokens for user",
+    tags=['Authorization']
 )
 def login(response: Response, body: OAuth2PasswordRequestForm = Depends(), authorization: bool = Depends(basic_authorization)):
     request = {'body': body, 'headers': None, 'query': None}
@@ -110,7 +131,7 @@ def create_module(body: CreateModuleParams, response: Response, authorization: U
 
 
 @app.get(
-    '/module/get/{module}',
+    '/module/get/{module_id}',
     responses={
         HTTPStatus.UNAUTHORIZED.value: {
             'model': Unauthorized, 'description': 'Invalid credentials'
@@ -129,8 +150,96 @@ def create_module(body: CreateModuleParams, response: Response, authorization: U
     status_code=HTTPStatus.OK,
     tags=['Module']
 )
-def get_module(module: int, response: Response, authorization: User = Depends(jwt_authorization)):
-    request = {'body': GetModuleParams(id=module), 'headers': None, 'query': None}
+def get_module(module_id: int, response: Response, authorization: User = Depends(jwt_authorization)):
+    request = {'body': GetModuleParams(id=module_id), 'headers': None, 'query': None}
     result = fast_api_adapter(request, get_module_factory())
     response.status_code = result.status_code
     return result.body
+
+
+@app.post(
+    '/lesson/create',
+    responses={
+        HTTPStatus.CREATED.value: {'model': CreateModuleResponse},
+        HTTPStatus.UNAUTHORIZED.value: {
+            'model': Unauthorized, 'description': 'Invalid credentials'
+        },
+        HTTPStatus.INTERNAL_SERVER_ERROR.value: {
+            'model': InternalServerError, 'description': 'Internal Server Error'
+        }
+    },
+    status_code=HTTPStatus.CREATED,
+    tags=['Lesson']
+)
+def create_lesson(body: CreateLessonParams, response: Response, authorization: User = Depends(jwt_authorization)):
+    request = {'body': body, 'headers': None, 'query': None}
+    result = fast_api_adapter(request, create_lesson_factory())
+    response.status_code = result.status_code
+    return result.body
+
+
+@app.delete(
+    '/lesson/delete/{lesson_id}',
+    responses={
+        HTTPStatus.NO_CONTENT.value: {'description': 'Lesson deleted'},
+        HTTPStatus.UNAUTHORIZED.value: {
+            'model': Unauthorized, 'description': 'Invalid credentials'
+        },
+        HTTPStatus.INTERNAL_SERVER_ERROR.value: {
+            'model': InternalServerError, 'description': 'Internal Server Error'
+        }
+    },
+    status_code=HTTPStatus.NO_CONTENT,
+    tags=['Lesson']
+)
+def delete_lesson(lesson_id: int, response: Response, authorization: User = Depends(jwt_authorization)):
+    request = {'body': DeleteLessonParams(id=lesson_id), 'headers': None, 'query': None}
+    result = fast_api_adapter(request, delete_lesson_factory())
+    response.status_code = result.status_code
+    if result.body:
+        return result.body
+    return response
+
+
+@app.get(
+    '/lesson/get/{lesson_id}',
+    responses={
+        HTTPStatus.NO_CONTENT.value: {'description': 'Lesson deleted'},
+        HTTPStatus.UNAUTHORIZED.value: {
+            'model': Unauthorized, 'description': 'Invalid credentials'
+        },
+        HTTPStatus.INTERNAL_SERVER_ERROR.value: {
+            'model': InternalServerError, 'description': 'Internal Server Error'
+        }
+    },
+    status_code=HTTPStatus.NO_CONTENT,
+    tags=['Lesson']
+)
+def get_lesson(lesson_id: int, response: Response, authorization: User = Depends(jwt_authorization)):
+    request = {'body': GetLessonParams(id=lesson_id), 'headers': None, 'query': None}
+    result = fast_api_adapter(request, get_lesson_factory())
+    response.status_code = result.status_code
+    return result.body
+
+
+@app.delete(
+    '/module/delete/{module_id}',
+    responses={
+        HTTPStatus.NO_CONTENT.value: {'description': 'Module deleted'},
+        HTTPStatus.UNAUTHORIZED.value: {
+            'model': Unauthorized, 'description': 'Invalid credentials'
+        },
+        HTTPStatus.INTERNAL_SERVER_ERROR.value: {
+            'model': InternalServerError, 'description': 'Internal Server Error'
+        }
+    },
+    status_code=HTTPStatus.NO_CONTENT,
+    tags=['Module']
+)
+def delete_module(module_id: int, response: Response, authorization: User = Depends(jwt_authorization)):
+    request = {'body': DeleteModuleParams(id=module_id), 'headers': None, 'query': None}
+    result = fast_api_adapter(request, delete_module_factory())
+    response.status_code = result.status_code
+    if result.body:
+        return result.body
+    return response

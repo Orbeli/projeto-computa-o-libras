@@ -1,33 +1,32 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-from app.domain.models import Module
+from app.domain.models import Lesson
 
 @dataclass
-class SaveModuleParams:
+class SaveLessonParams:
     name: str
-    subject: str
     duration: str
+    module: int
 
 
-class ModuleRepositoryContract(ABC):
+class LessonRepositoryContract(ABC):
     @abstractmethod
-    def get_module_by_id(
+    def get_lesson_by_id(
         self,
         id: int
-    ) -> Module:
+    ) -> Lesson:
         raise NotImplementedError()
 
     @abstractmethod
-    def delete_module_by_id(
+    def delete_lesson_by_id(
         self,
         id: int
     ) -> None:
         raise NotImplementedError()
 
-    @abstractmethod
-    def create_module(
+    def create_lesson(
         self,
-        params: SaveModuleParams
+        params: SaveLessonParams
     ) -> str:
         raise NotImplementedError()
