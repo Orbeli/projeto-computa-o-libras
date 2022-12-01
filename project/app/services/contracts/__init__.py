@@ -1,1 +1,2 @@
 from .user_repository_contract import UserRepositoryContract, SaveUserParams
+from .module_repository_contract import ModuleRepositoryContract, SaveModuleParams

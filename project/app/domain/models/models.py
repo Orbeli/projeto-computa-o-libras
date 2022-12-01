@@ -28,9 +28,6 @@ class Module(Base):
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.current_timestamp())
 
-    lesson_id = Column(Integer, ForeignKey('lesson.id'))
-    lesson = relationship("Lesson")
-
 
 class Lesson(Base):
     __tablename__ = "lesson"
@@ -40,3 +37,6 @@ class Lesson(Base):
     duration = Column(String)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.current_timestamp())
+
+    module_id = Column(Integer, ForeignKey('module.id'))
+    module = relationship("Module")
